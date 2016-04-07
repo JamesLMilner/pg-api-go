@@ -7,6 +7,12 @@ This short program sprang out of a TfL (Transport for London) Hack Day that happ
 
   * Go ([here](https://golang.org/dl/))
   * The Postgres driver for Go ([here](https://github.com/lib/pq))
+  * Mux ([here](https://github.com/gorilla/mux))
+
+**Dependency Installs**:
+
+        go get github.com/gorilla/mux
+        go get github.com/lib/pq
 
 ## Building
 Whilst in the src directory:
