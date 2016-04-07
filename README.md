@@ -25,19 +25,19 @@ The endpoint defaults to localhost:8080/data and you can query PG using the foll
 
 Using this syntax you can pull back data as JSON in the following schema:
 
-      ```javascript
-      {
-        "0": {
-          "Fields": {
-            "id": 1,
-            "name": "James"
-          }
-        },
-        "Elapsed": {
-          "milliseconds": 12
-        }
-      }
-      ```
+```javascript
+{
+  "0": {
+    "Fields": {
+      "id": 1,
+      "name": "James"
+    }
+  },
+  "Elapsed": {
+    "milliseconds": 12
+  }
+}
+```
 
 Each object is a row with the row number as a string.
 
