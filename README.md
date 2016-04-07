@@ -22,10 +22,8 @@ Whilst in the src directory:
 
 ## Usage
 
-The endpoint defaults to localhost:8080/data and you can query PG using the following parameters
+The endpoint defaults to localhost:8080/data/{table} where {table} is the table you want to query and the parameters are as follows:
 
-
-  * table (required) - the name of the table i.e. ?table=customers
   * where (optional) - a simple SQL where clause delimited by a colon i.e. ?where=customer:bob
   * limit (optional) - limit the number of rows returned
 
