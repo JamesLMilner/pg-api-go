@@ -12,11 +12,13 @@ import (
     "time"
     "strconv"
     "github.com/lib/pq"
+    "github.com/gorilla/mux"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
     w.Header().Set("Content-Type", "application/json")
+    vars := mux.Vars(r)
 
     // Timing
     start := time.Now()
@@ -31,7 +33,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
         DB_PORT     = os.Getenv("PG_PORT")
     )
 
-
     // Postgres Connect
     dbinfo := fmt.Sprintf("host=%s dbname=%s user=%s password=%s port=%s sslmode=disable",
                            DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT)
@@ -40,8 +41,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
         handleError(w, err.Error())
     }
     defer db.Close()
-
-    table := r.FormValue("table")
+    table := vars["table"]
     limit := r.FormValue("limit")
     where := r.FormValue("where")
 
@@ -138,6 +138,7 @@ func handleError(w http.ResponseWriter, err string) {
 }
 
 func main() {
-    http.HandleFunc("/data", handler)
-    http.ListenAndServe(":8080", nil)
+    r := mux.NewRouter()
+    r.HandleFunc("/data/{table}", handler)
+    http.ListenAndServe(":8080", r)
 }
