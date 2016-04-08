@@ -5,7 +5,7 @@ import (
     "os"
     "encoding/json"
     "io"
-    //"log"
+    "log"
     "net/http"
     "database/sql"
     "strings"
@@ -42,8 +42,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
     }
     defer db.Close()
     table := vars["table"]
-    limit := r.FormValue("limit")
-    where := r.FormValue("where")
+    limit := ""
+    where := ""
+    order := ""
+    limit = r.FormValue("limit")
+    where = r.FormValue("where")
+    order = r.FormValue("order")
 
     valid := cleanseInput(w, table, limit, where)
     if valid != true {
@@ -53,27 +57,41 @@ func handler(w http.ResponseWriter, r *http.Request) {
     // If table defined
     if table != "" {
         var q string
-
-        if limit == "" {
-          limit = "100"
-        }
+        var whereId string
+        var whereEq string
 
         table := pq.QuoteIdentifier(table)
         if where != "" {
           clause := strings.Split(where, ":") // We delimit where clause using :
-          ident := clause[0]
-          equals := clause[1]
-          q = fmt.Sprintf("SELECT * FROM %s WHERE %s = %s LIMIT %s", table, ident, equals, limit)
+          whereId = clause[0]
+          whereEq = clause[1]
+          q = fmt.Sprintf("SELECT * FROM %s WHERE %s", table, whereId)
         } else {
-          q = fmt.Sprintf("SELECT * FROM %s LIMIT %s", table, limit)
+          q = fmt.Sprintf("SELECT * FROM %s", table)
         }
 
-        //log.Print(q) // Log the query to console
+        var dberr error
+        var rows *sql.Rows
+
+        if where == "" && order == "" && limit == "" { // 000
+          rows, dberr = db.Query(q)
+        } else if where != "" && order != "" && limit != "" { // 111
+          rows, dberr = db.Query(q + "=$1 ORDER BY $2 LIMIT $3", whereEq, order, limit)
+        } else if where == "" && order == "" && limit != "" { // 001
+          rows, dberr = db.Query(q + " LIMIT $1",  limit)
+        } else if where != "" && order != "" && limit == "" { // 110
+          rows, dberr = db.Query(q + "$1 ORDER BY $2",  whereEq, order)
+        } else if where != "" && order == "" && limit != "" { // 101
+          rows, dberr = db.Query(q + "$1 LIMIT $2", limit)
+        } else if where != "" && order == "" && limit == "" { // 100
+          rows, dberr = db.Query(q + "$1", whereEq)
+        } else if where == "" && order != "" && limit != "" { // 010
+          rows, dberr = db.Query(q + " ORDER BY $1", order)
+        }
 
         // Get rows or error
-        rows, err := db.Query(q) // Pass the query to the database
-        if err != nil {
-            handleError(w, err.Error())
+        if dberr != nil {
+            handleError(w, dberr.Error())
             return
         }
         defer rows.Close()
@@ -140,15 +158,15 @@ func cleanseInput(w http.ResponseWriter, str ...string) bool {
 
   for _, s := range str {
     if strings.Contains(s, " ") {
-      handleError(w, "Bad input")
+      handleError(w, "Bad table or identifier")
       valid = false
     }
     if strings.Contains(s, ";") {
-      handleError(w, "Bad input")
+      handleError(w, "Bad table or identifier")
       valid = false
     }
     if strings.Contains(s, "--") {
-      handleError(w, "Bad input")
+      handleError(w, "Bad table or identifier")
       valid = false
     }
   }
