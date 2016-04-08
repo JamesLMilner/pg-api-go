@@ -48,6 +48,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
     where = r.FormValue("where")
     order = r.FormValue("order")
 
+
+    // Cleanse the inputs from being invalid or malicious
     valid := cleanseInput(w, table, limit, where)
     if valid != true {
       return
@@ -72,7 +74,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
         var dberr error
         var rows *sql.Rows
 
-
+        // I'm hoping there's a nice way to do all this?
         // Handle the various combinations that might occur - Eventually maybe use https://github.com/Masterminds/squirrel ?
         if where == "" && order == "" && limit == "" { // 000
           rows, dberr = db.Query(q)
