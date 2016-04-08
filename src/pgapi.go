@@ -48,7 +48,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
     where = r.FormValue("where")
     order = r.FormValue("order")
 
-
     // Cleanse the inputs from being invalid or malicious
     valid := cleanseInput(w, table, limit, where)
     if valid != true {
@@ -66,7 +65,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
           clause := strings.Split(where, ":") // We delimit where clause using :
           whereId = clause[0]
           whereEq = clause[1]
-          q = fmt.Sprintf("SELECT * FROM %s WHERE %s", table, whereId)
+          q = fmt.Sprintf("SELECT * FROM %s WHERE %s=", table, whereId)
         } else {
           q = fmt.Sprintf("SELECT * FROM %s", table)
         }
@@ -79,13 +78,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
         if where == "" && order == "" && limit == "" { // 000
           rows, dberr = db.Query(q)
         } else if where != "" && order != "" && limit != "" { // 111
-          rows, dberr = db.Query(q + "=$1 ORDER BY $2 LIMIT $3", whereEq, order, limit)
+          rows, dberr = db.Query(q + "$1 ORDER BY $2 LIMIT $3", whereEq, order, limit)
         } else if where == "" && order == "" && limit != "" { // 001
           rows, dberr = db.Query(q + " LIMIT $1",  limit)
         } else if where != "" && order != "" && limit == "" { // 110
           rows, dberr = db.Query(q + "$1 ORDER BY $2",  whereEq, order)
         } else if where != "" && order == "" && limit != "" { // 101
-          rows, dberr = db.Query(q + "$1 LIMIT $2", limit)
+          rows, dberr = db.Query(q + "$1 LIMIT $2",  whereEq, limit)
         } else if where != "" && order == "" && limit == "" { // 100
           rows, dberr = db.Query(q + "$1", whereEq)
         } else if where == "" && order != "" && limit != "" { // 010
