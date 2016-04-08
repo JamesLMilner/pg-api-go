@@ -5,7 +5,6 @@ import (
     "os"
     "encoding/json"
     "io"
-    "log"
     "net/http"
     "database/sql"
     "strings"
