@@ -72,6 +72,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
         var dberr error
         var rows *sql.Rows
 
+
+        // Handle the various combinations that might occur - Eventually maybe use https://github.com/Masterminds/squirrel ?
         if where == "" && order == "" && limit == "" { // 000
           rows, dberr = db.Query(q)
         } else if where != "" && order != "" && limit != "" { // 111
