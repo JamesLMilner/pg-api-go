@@ -48,11 +48,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     where = r.FormValue("where")
     order = r.FormValue("order")
 
-    // Cleanse the inputs from being invalid or malicious
-    valid := cleanseInput(w, table, limit, where)
-    if valid != true {
-      return
-    }
+
 
     // If table defined
     if table != "" {
@@ -65,8 +61,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
           clause := strings.Split(where, ":") // We delimit where clause using :
           whereId = clause[0]
           whereEq = clause[1]
+
+          valid := cleanseInput(w, table, whereId) // Cleanse the inputs from being invalid or malicious
+          if valid != true {
+            return
+          }
           q = fmt.Sprintf("SELECT * FROM %s WHERE %s=", table, whereId)
         } else {
+          valid := cleanseInput(w, table) // Cleanse the inputs from being invalid or malicious
+          if valid != true {
+            return
+          }
           q = fmt.Sprintf("SELECT * FROM %s", table)
         }
 
@@ -90,6 +95,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
         } else if where == "" && order != "" && limit != "" { // 010
           rows, dberr = db.Query(q + " ORDER BY $1", order)
         }
+
+        "SELECT * FROM test WHERE id="
 
         // Get rows or error
         if dberr != nil {
