@@ -5,7 +5,7 @@ import (
     "os"
     "encoding/json"
     "io"
-    "log"
+    //"log"
     "net/http"
     "database/sql"
     "strings"
@@ -45,6 +45,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
     limit := r.FormValue("limit")
     where := r.FormValue("where")
 
+    valid := cleanseInput(w, table, limit, where)
+    if valid != true {
+      return
+    }
+
     // If table defined
     if table != "" {
         var q string
@@ -63,7 +68,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
           q = fmt.Sprintf("SELECT * FROM %s LIMIT %s", table, limit)
         }
 
-        log.Print(q) // Log the query to console
+        //log.Print(q) // Log the query to console
 
         // Get rows or error
         rows, err := db.Query(q) // Pass the query to the database
@@ -127,6 +132,28 @@ func handler(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(returnjson)
 
     }
+}
+
+func cleanseInput(w http.ResponseWriter, str ...string) bool {
+
+  valid := true
+
+  for _, s := range str {
+    if strings.Contains(s, " ") {
+      handleError(w, "Bad input")
+      valid = false
+    }
+    if strings.Contains(s, ";") {
+      handleError(w, "Bad input")
+      valid = false
+    }
+    if strings.Contains(s, "--") {
+      handleError(w, "Bad input")
+      valid = false
+    }
+  }
+
+  return valid
 }
 
 func handleError(w http.ResponseWriter, err string) {
