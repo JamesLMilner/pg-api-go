@@ -48,31 +48,31 @@ func handler(w http.ResponseWriter, r *http.Request) {
     where = r.FormValue("where")
     order = r.FormValue("order")
 
-
-
     // If table defined
     if table != "" {
+
         var q string
         var whereId string
         var whereEq string
+        var valid bool
 
         table := pq.QuoteIdentifier(table)
         if where != "" {
+
           clause := strings.Split(where, ":") // We delimit where clause using :
           whereId = clause[0]
           whereEq = clause[1]
-
-          valid := cleanseInput(w, table, whereId) // Cleanse the inputs from being invalid or malicious
-          if valid != true {
-            return
-          }
+          valid = cleanseInput(w, table, whereId) // Cleanse the inputs from being invalid or malicious
           q = fmt.Sprintf("SELECT * FROM %s WHERE %s=", table, whereId)
+
         } else {
-          valid := cleanseInput(w, table) // Cleanse the inputs from being invalid or malicious
-          if valid != true {
-            return
-          }
+
+          valid = cleanseInput(w, table) // Cleanse the inputs from being invalid or malicious
           q = fmt.Sprintf("SELECT * FROM %s", table)
+
+        }
+        if valid != true {
+          return
         }
 
         var dberr error
@@ -95,8 +95,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
         } else if where == "" && order != "" && limit != "" { // 010
           rows, dberr = db.Query(q + " ORDER BY $1", order)
         }
-
-        "SELECT * FROM test WHERE id="
 
         // Get rows or error
         if dberr != nil {
@@ -158,6 +156,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
         // Return the data
         json.NewEncoder(w).Encode(returnjson)
 
+    } else {
+      handleError(w, "Table not specified")
+      return
     }
 }
 
@@ -193,6 +194,7 @@ func handleError(w http.ResponseWriter, err string) {
 
 func main() {
     r := mux.NewRouter()
+    r.HandleFunc("/data/", handler)
     r.HandleFunc("/data/{table}", handler)
     http.ListenAndServe(":8080", r)
 }
